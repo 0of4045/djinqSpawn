@@ -20,19 +20,19 @@ first-join:
 sounds:
   countdown:
     enabled: true
-    name: 'BLOCK_NOTE_BLOCK_HAT'
+    name: 'minecraft:ui.button.click'
     volume: 0.6
     pitch: 1.2
 
   teleport:
     enabled: true
-    name: 'ENTITY_ENDERMAN_TELEPORT'
+    name: 'minecraft:entity.enderman.teleport'
     volume: 0.7
     pitch: 1.2
 
   cancelled:
     enabled: true
-    name: 'BLOCK_NOTE_BLOCK_BASS'
+    name: 'minecraft:block.note_block.bass'
     volume: 0.5
     pitch: 0.8
 
