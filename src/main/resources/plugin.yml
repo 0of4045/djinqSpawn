@@ -1,0 +1,49 @@
+name: djinqSpawn
+version: '${project.version}'
+main: dev.djinq.djinqspawn.DjinqSpawnPlugin
+api-version: '1.21'
+author: djinq
+description: A lightweight, standalone djinqSpawn plugin.
+
+commands:
+  spawn:
+    description: Teleport to Spawn.
+    usage: /spawn
+  setspawn:
+    description: Set the global Spawn to your exact location.
+    usage: /setspawn
+  delspawn:
+    description: Delete the global Spawn.
+    usage: /delspawn
+  djinqspawn:
+    description: djinqSpawn administration.
+    usage: /djinqspawn reload
+
+permissions:
+  djinqspawn.spawn.use:
+    default: true
+  djinqspawn.spawn.set:
+    default: op
+  djinqspawn.spawn.delete:
+    default: op
+  djinqspawn.spawn.bypass:
+    default: op
+  djinqspawn.admin.reload:
+    default: op
+  djinqspawn.spawn.admin:
+    default: op
+    children:
+      djinqspawn.spawn.set: true
+      djinqspawn.spawn.delete: true
+      djinqspawn.spawn.bypass: true
+  djinqspawn.admin:
+    default: op
+    children:
+      djinqspawn.admin.reload: true
+      djinqspawn.spawn.admin: true
+  djinqspawn.*:
+    default: op
+    children:
+      djinqspawn.spawn.use: true
+      djinqspawn.admin: true
+

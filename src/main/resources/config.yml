@@ -1,0 +1,39 @@
+# Spawn locations are saved separately and immediately in spawn.yml.
+teleport:
+  delay-seconds: 3
+
+  cancel-on:
+    movement: true
+    damage: true
+    world-change: true
+
+  # Small position changes at or below this distance are ignored. Looking around never cancels.
+  movement-tolerance: 0.05
+
+  countdown:
+    action-bar: true
+    chat-message: true
+
+first-join:
+  teleport-to-spawn: true
+
+sounds:
+  countdown:
+    enabled: true
+    name: 'BLOCK_NOTE_BLOCK_HAT'
+    volume: 0.6
+    pitch: 1.2
+
+  teleport:
+    enabled: true
+    name: 'ENTITY_ENDERMAN_TELEPORT'
+    volume: 0.7
+    pitch: 1.2
+
+  cancelled:
+    enabled: true
+    name: 'BLOCK_NOTE_BLOCK_BASS'
+    volume: 0.5
+    pitch: 0.8
+
+
