@@ -1,22 +1,29 @@
-# Spawn locations are saved separately and immediately in spawn.yml.
+# djinqSpawn made by djinq
+
+# teleport ~ settings for /spawn
 teleport:
+  # delay before teleport ~ 0 teleports instantly
   delay-seconds: 3
 
+  # cancel teleport when
   cancel-on:
     movement: true
     damage: true
     world-change: true
 
-  # Small position changes at or below this distance are ignored. Looking around never cancels.
+  # small position changes at or below this distance are ignored
   movement-tolerance: 0.05
 
+  # countdown messages while waiting
   countdown:
     action-bar: true
     chat-message: true
 
+# first join ~ teleport new players to spawn
 first-join:
   teleport-to-spawn: true
 
+# sounds ~ set enabled false to mute a sound
 sounds:
   countdown:
     enabled: true
@@ -35,5 +42,3 @@ sounds:
     name: 'minecraft:block.note_block.bass'
     volume: 0.5
     pitch: 0.8
-
-
