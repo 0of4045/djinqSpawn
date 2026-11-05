@@ -1,3 +1,5 @@
+<img width="1024" height="146" alt="djinqSpawn" src="https://github.com/user-attachments/assets/ee320be7-d1e4-4807-ad92-3f4bc2899827" />
+
 # djinqSpawn
 
 A small and lightweight `/spawn` plugin for Paper servers.
