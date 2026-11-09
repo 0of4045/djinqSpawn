@@ -6,7 +6,7 @@
 
     <groupId>dev.djinq</groupId>
     <artifactId>djinqspawn</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>djinqSpawn</name>
     <description>A lightweight, standalone djinqSpawn plugin for Paper.</description>
 
