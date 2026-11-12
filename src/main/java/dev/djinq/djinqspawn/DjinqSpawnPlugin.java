@@ -25,8 +25,8 @@ public final class DjinqSpawnPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
-            saveDefaultConfig();
-            saveResourceIfAbsent("messages.yml");
+            ResourceMigration.mergeMissingDefaults(this, "config.yml");
+            ResourceMigration.mergeMissingDefaults(this, "messages.yml");
 
             SpawnTeleportSettings teleportSettings = loadTeleportSettings();
             messages = new MessageService(new File(getDataFolder(), "messages.yml"));
@@ -71,13 +71,6 @@ public final class DjinqSpawnPlugin extends JavaPlugin {
         Objects.requireNonNull(getCommand("setspawn")).setExecutor(commands);
         Objects.requireNonNull(getCommand("delspawn")).setExecutor(commands);
         Objects.requireNonNull(getCommand("djinqspawn")).setExecutor(commands);
-    }
-
-    private void saveResourceIfAbsent(String name) {
-        File target = new File(getDataFolder(), name);
-        if (!target.isFile()) {
-            saveResource(name, false);
-        }
     }
 
     private SpawnTeleportSettings loadTeleportSettings() throws IOException, InvalidConfigurationException {
