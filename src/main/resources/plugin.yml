@@ -1,9 +1,10 @@
 name: djinqSpawn
-version: '1.0.4'
+version: '2.0.0'
 main: dev.djinq.djinqspawn.DjinqSpawnPlugin
 api-version: '1.21'
+description: Lightweight spawn teleportation for Paper.
 author: djinq
-description: A lightweight, standalone djinqSpawn plugin.
+website: https://djinq.dev
 
 commands:
   spawn:

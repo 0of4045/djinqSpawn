@@ -1,17 +1,19 @@
 package dev.djinq.djinqspawn.config;
 
-import dev.djinq.djinqspawn.text.TextRenderer;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+
+import dev.djinq.djinqspawn.text.TextRenderer;
 
 public final class MessageService {
     private static final String PREFIX_KEY = "\u0000prefix";

@@ -1,5 +1,17 @@
 package dev.djinq.djinqspawn;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import dev.djinq.djinqspawn.command.SpawnCommandHandler;
 import dev.djinq.djinqspawn.config.MessageService;
 import dev.djinq.djinqspawn.spawn.SpawnListener;
@@ -7,15 +19,6 @@ import dev.djinq.djinqspawn.spawn.SpawnService;
 import dev.djinq.djinqspawn.spawn.SpawnTeleportManager;
 import dev.djinq.djinqspawn.spawn.SpawnTeleportSettings;
 import dev.djinq.djinqspawn.text.TextRenderer;
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DjinqSpawnPlugin extends JavaPlugin {
     private MessageService messages;
@@ -37,7 +40,7 @@ public final class DjinqSpawnPlugin extends JavaPlugin {
             Bukkit.getPluginManager().registerEvents(new SpawnListener(this), this);
             Bukkit.getConsoleSender().sendMessage(TextRenderer.render(
                     "<#B3E342>djinqSpawn <#CACACA>made by <#B3E342>djinq "
-                            + "<#CACACA>| <#97DD25>djinq.dev <#CACACA>| <#B3E342>Loaded"));
+                            + "<#CACACA>| <#B3E342>djinq.dev <#CACACA>| <#B3E342>Loaded"));
         } catch (Exception exception) {
             getLogger().severe("Could not enable djinqSpawn: " + describe(exception));
             Bukkit.getPluginManager().disablePlugin(this);
@@ -65,12 +68,21 @@ public final class DjinqSpawnPlugin extends JavaPlugin {
         }
     }
 
+    public SpawnService spawnService() {
+        return spawnService;
+    }
+
+    public SpawnTeleportManager spawnTeleports() {
+        return spawnTeleports;
+    }
+
     private void registerCommands() {
         SpawnCommandHandler commands = new SpawnCommandHandler(this, messages);
-        Objects.requireNonNull(getCommand("spawn")).setExecutor(commands);
-        Objects.requireNonNull(getCommand("setspawn")).setExecutor(commands);
-        Objects.requireNonNull(getCommand("delspawn")).setExecutor(commands);
-        Objects.requireNonNull(getCommand("djinqspawn")).setExecutor(commands);
+        for (String name : new String[] {"spawn", "setspawn", "delspawn", "djinqspawn"}) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name));
+            command.setExecutor(commands);
+            command.setTabCompleter(commands);
+        }
     }
 
     private SpawnTeleportSettings loadTeleportSettings() throws IOException, InvalidConfigurationException {
@@ -83,13 +95,4 @@ public final class DjinqSpawnPlugin extends JavaPlugin {
         String message = throwable.getMessage();
         return message == null || message.isBlank() ? throwable.getClass().getSimpleName() : message;
     }
-
-    public SpawnService spawnService() {
-        return spawnService;
-    }
-
-    public SpawnTeleportManager spawnTeleports() {
-        return spawnTeleports;
-    }
-
 }

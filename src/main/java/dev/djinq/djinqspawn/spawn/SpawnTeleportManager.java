@@ -1,18 +1,23 @@
 package dev.djinq.djinqspawn.spawn;
 
-import dev.djinq.djinqspawn.DjinqSpawnPlugin;
-import dev.djinq.djinqspawn.config.MessageService;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.scheduler.BukkitTask;
+
+import dev.djinq.djinqspawn.DjinqSpawnPlugin;
+import dev.djinq.djinqspawn.config.MessageService;
 
 public final class SpawnTeleportManager {
     private static final String USE_PERMISSION = "djinqspawn.spawn.use";
@@ -23,6 +28,8 @@ public final class SpawnTeleportManager {
     private final MessageService messages;
     private final ConcurrentHashMap<UUID, PendingTeleport> pending = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, InFlightTeleport> inFlight = new ConcurrentHashMap<>();
+    private final Set<UUID> completing = new HashSet<>();
+    private final Map<UUID, List<Runnable>> eventChecks = new HashMap<>();
 
     private volatile SpawnTeleportSettings settings;
     private BukkitTask ticker;
@@ -62,7 +69,7 @@ public final class SpawnTeleportManager {
 
         SpawnTeleportSettings current = settings;
         if (player.hasPermission(BYPASS_PERMISSION) || current.delaySeconds() == 0) {
-            teleportLatest(player, true, true);
+            teleportLatest(player, true, true, new Object());
             return;
         }
 
@@ -85,12 +92,35 @@ public final class SpawnTeleportManager {
 
     public void teleportFirstJoin(Player player) {
         if (accepting && settings.firstJoinTeleport() && player.isOnline() && !player.isDead()) {
-            teleportLatest(player, false, false);
+            teleportLatest(player, false, false, new Object());
         }
     }
 
     public boolean hasActiveTeleport(UUID playerId) {
         return pending.containsKey(playerId) || inFlight.containsKey(playerId);
+    }
+
+    Object activeTeleportIdentity(UUID playerId) {
+        PendingTeleport waiting = pending.get(playerId);
+        if (waiting != null) {
+            return waiting;
+        }
+        InFlightTeleport loading = inFlight.get(playerId);
+        return loading == null ? null : loading.identity();
+    }
+
+    boolean isCompletingTeleport(UUID playerId) {
+        return completing.contains(playerId);
+    }
+
+    void checkAfterEvent(UUID playerId, Runnable check) {
+        List<Runnable> checks = eventChecks.get(playerId);
+        if (checks == null) {
+            checks = new ArrayList<>();
+            eventChecks.put(playerId, checks);
+            Bukkit.getScheduler().runTask(plugin, () -> runEventChecks(playerId));
+        }
+        checks.add(check);
     }
 
     public void cancelForMove(Player player, Location destination) {
@@ -140,12 +170,10 @@ public final class SpawnTeleportManager {
 
     public void cancelForDeath(UUID playerId) {
         remove(playerId);
-        inFlight.remove(playerId);
     }
 
     public void cancelForQuit(UUID playerId) {
         remove(playerId);
-        inFlight.remove(playerId);
     }
 
     public void spawnDeleted() {
@@ -165,6 +193,8 @@ public final class SpawnTeleportManager {
         accepting = false;
         pending.clear();
         inFlight.clear();
+        completing.clear();
+        eventChecks.clear();
         stopTicker();
     }
 
@@ -189,7 +219,7 @@ public final class SpawnTeleportManager {
 
             if (state.remainingSeconds() == 0) {
                 if (pending.remove(state.playerId(), state)) {
-                    teleportLatest(player, true, true);
+                    teleportLatest(player, true, true, state);
                 }
                 continue;
             }
@@ -202,7 +232,8 @@ public final class SpawnTeleportManager {
                 player.sendActionBar(countdown);
             }
             if (current.chatMessage()) {
-                messages.send(player, "teleport-countdown", Map.of("seconds", Integer.toString(state.remainingSeconds())));
+                messages.send(
+                        player, "teleport-countdown", Map.of("seconds", Integer.toString(state.remainingSeconds())));
             }
             play(player, current.countdownSound());
             state.decrement();
@@ -213,7 +244,7 @@ public final class SpawnTeleportManager {
         }
     }
 
-    private void teleportLatest(Player player, boolean announce, boolean requirePermission) {
+    private void teleportLatest(Player player, boolean announce, boolean requirePermission, Object identity) {
         if (!accepting || !player.isOnline() || player.isDead()) {
             return;
         }
@@ -231,14 +262,16 @@ public final class SpawnTeleportManager {
 
         UUID playerId = player.getUniqueId();
         Location start = player.getLocation();
+        PendingTeleport waiting = identity instanceof PendingTeleport state ? state : null;
         InFlightTeleport request = new InFlightTeleport(
                 playerId,
-                start.getWorld().getUID(),
-                start.getX(),
-                start.getY(),
-                start.getZ(),
+                waiting == null ? start.getWorld().getUID() : waiting.worldId(),
+                waiting == null ? start.getX() : waiting.x(),
+                waiting == null ? start.getY() : waiting.y(),
+                waiting == null ? start.getZ() : waiting.z(),
                 announce,
-                requirePermission);
+                requirePermission,
+                identity);
         if (inFlight.putIfAbsent(playerId, request) != null) {
             if (announce) {
                 messages.send(player, "already-teleporting", Map.of());
@@ -250,8 +283,8 @@ public final class SpawnTeleportManager {
 
     private void prepareDestination(Player player, InFlightTeleport request, Location destination) {
         try {
-            destination.getWorld().getChunkAtAsync(destination)
-                    .whenComplete((chunk, error) -> schedulePrepared(player, request, destination, error));
+            destination.getWorld().getChunkAtAsync(destination).whenComplete(
+                    (chunk, error) -> schedulePrepared(player, request, destination, error));
         } catch (RuntimeException exception) {
             failPreparation(player, request);
         }
@@ -273,6 +306,8 @@ public final class SpawnTeleportManager {
 
     private void completePrepared(
             Player player, InFlightTeleport request, Location preparedDestination, Throwable error) {
+        // Event checks must run before teleporting, even if this callback was queued first.
+        runEventChecks(request.playerId());
         if (inFlight.get(request.playerId()) != request) {
             return;
         }
@@ -300,10 +335,13 @@ public final class SpawnTeleportManager {
         }
 
         boolean success;
+        completing.add(player.getUniqueId());
         try {
             success = player.teleport(latest, TeleportCause.PLUGIN);
         } catch (RuntimeException exception) {
             success = false;
+        } finally {
+            completing.remove(player.getUniqueId());
         }
         inFlight.remove(request.playerId(), request);
 
@@ -345,7 +383,7 @@ public final class SpawnTeleportManager {
         if (!remove(player.getUniqueId())) {
             return;
         }
-        player.sendActionBar(net.kyori.adventure.text.Component.empty());
+        player.sendActionBar(Component.empty());
         if (playSound) {
             play(player, settings.cancelledSound());
         }
@@ -353,6 +391,7 @@ public final class SpawnTeleportManager {
     }
 
     private boolean remove(UUID playerId) {
+        eventChecks.remove(playerId);
         boolean removed = pending.remove(playerId) != null;
         removed |= inFlight.remove(playerId) != null;
         if (removed && pending.isEmpty()) {
@@ -365,6 +404,15 @@ public final class SpawnTeleportManager {
         if (ticker != null) {
             ticker.cancel();
             ticker = null;
+        }
+    }
+
+    private void runEventChecks(UUID playerId) {
+        List<Runnable> checks = eventChecks.remove(playerId);
+        if (checks != null) {
+            for (Runnable check : checks) {
+                check.run();
+            }
         }
     }
 
@@ -387,7 +435,8 @@ public final class SpawnTeleportManager {
             double y,
             double z,
             boolean announce,
-            boolean requirePermission) {
+            boolean requirePermission,
+            Object identity) {
     }
 
     private static final class PendingTeleport {

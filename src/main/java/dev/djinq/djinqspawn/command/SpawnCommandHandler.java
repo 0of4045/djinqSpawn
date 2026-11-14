@@ -1,15 +1,20 @@
 package dev.djinq.djinqspawn.command;
 
-import dev.djinq.djinqspawn.DjinqSpawnPlugin;
-import dev.djinq.djinqspawn.config.MessageService;
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public final class SpawnCommandHandler implements CommandExecutor {
+import dev.djinq.djinqspawn.DjinqSpawnPlugin;
+import dev.djinq.djinqspawn.config.MessageService;
+
+public final class SpawnCommandHandler implements CommandExecutor, TabCompleter {
     private final DjinqSpawnPlugin plugin;
     private final MessageService messages;
 
@@ -20,13 +25,23 @@ public final class SpawnCommandHandler implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        return switch (command.getName().toLowerCase()) {
+        return switch (command.getName().toLowerCase(Locale.ROOT)) {
             case "spawn" -> spawn(sender, args);
             case "setspawn" -> setSpawn(sender, args);
             case "delspawn" -> deleteSpawn(sender, args);
             case "djinqspawn" -> admin(sender, args);
             default -> false;
         };
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equalsIgnoreCase("djinqspawn") && args.length == 1
+                && sender.hasPermission("djinqspawn.admin.reload")
+                && "reload".startsWith(args[0].toLowerCase(Locale.ROOT))) {
+            return List.of("reload");
+        }
+        return List.of();
     }
 
     private boolean spawn(CommandSender sender, String[] args) {

@@ -8,6 +8,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
+
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -75,7 +76,8 @@ final class SpawnRepository {
         try {
             return UUID.fromString(serialized);
         } catch (IllegalArgumentException exception) {
-            logger.warning("spawn.yml has an invalid world UUID. Its data was retained and world-name resolution will be attempted.");
+            logger.warning("spawn.yml has an invalid world UUID. "
+                    + "Its data was retained and world-name resolution will be attempted.");
             return null;
         }
     }

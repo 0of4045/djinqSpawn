@@ -1,5 +1,3 @@
-<img width="1024" height="146" alt="djinqSpawn" src="https://github.com/user-attachments/assets/ee320be7-d1e4-4807-ad92-3f4bc2899827" />
-
 # djinqSpawn
 
 A small and lightweight `/spawn` plugin for Paper servers.
@@ -41,9 +39,13 @@ In `config.yml`, you can edit:
 
 - `teleport.delay-seconds` ~ the delay before teleporting.
 - `teleport.cancel-on` ~ whether movement, damage, or world changes cancel a teleport.
+- `teleport.movement-tolerance` ~ the movement distance ignored while waiting.
+- `first-join.teleport-to-spawn` ~ whether new players teleport to spawn.
 - `teleport.countdown` ~ actionbar and chat countdown settings.
 - `sounds` ~ countdown, teleport, and cancel sounds.
 
 `messages.yml` contains one `prefix` setting. It is added automatically to every chat message, while the actionbar countdown stays clean without a prefix.
 
-Built for Paper 1.21.11 through 26.3. Use Java 21 for 1.21.11, or Java 25 for Paper 26.1+.
+Existing customized settings, messages and saved spawn data are preserved. Missing defaults are added on startup, with a backup before changes.
+
+Built for Paper 1.21.11 through 26.3. Use Java 21 for Paper 1.21.11, or Java 25 for Paper 26.1+.

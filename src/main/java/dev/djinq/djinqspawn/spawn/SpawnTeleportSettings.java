@@ -1,6 +1,7 @@
 package dev.djinq.djinqspawn.spawn;
 
 import java.util.Locale;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.Sound;
@@ -91,7 +92,8 @@ public record SpawnTeleportSettings(
         return result;
     }
 
-    private static double decimal(YamlConfiguration config, String path, double fallback, double minimum, double maximum) {
+    private static double decimal(
+            YamlConfiguration config, String path, double fallback, double minimum, double maximum) {
         Object value = config.get(path);
         if (value == null) {
             return fallback;

@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.Plugin;
 
 public final class SpawnService {
@@ -15,7 +17,7 @@ public final class SpawnService {
     private final AtomicBoolean unresolvedLogged = new AtomicBoolean();
     private volatile SpawnRepository.StoredSpawn stored;
 
-    public SpawnService(Plugin plugin) throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+    public SpawnService(Plugin plugin) throws IOException, InvalidConfigurationException {
         this.plugin = plugin;
         repository = new SpawnRepository(new File(plugin.getDataFolder(), "spawn.yml"), plugin.getLogger());
         stored = repository.load().orElse(null);
@@ -42,7 +44,8 @@ public final class SpawnService {
         }
 
         if (unresolvedLogged.getAndSet(false)) {
-            plugin.getLogger().info("The configured Spawn world is available again; retained Spawn data resolved successfully.");
+            plugin.getLogger().info(
+                    "The configured Spawn world is available again; retained Spawn data resolved successfully.");
         }
         return new Location(world, current.x(), current.y(), current.z(), current.yaw(), current.pitch());
     }
